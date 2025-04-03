@@ -10,8 +10,9 @@ export const useWrappedDecoderState = (decoder, wrapperFnc) => {
       target[name] = wrapperFnc([])
 
     $(schema)[name].onAdd((item, index) => {
-      console.log(item, index)
       const finalTarget = wrapperFnc({})
+      // TODO: check if a primative value, and somehow bind that?
+      // TODO: when adding an item, sometimes the item is added twice if the array isn't seen beforehand?
       bindSchema(item, finalTarget)
       target[name].splice(index, 0, finalTarget)
     })
@@ -27,6 +28,7 @@ export const useWrappedDecoderState = (decoder, wrapperFnc) => {
 
     $(schema)[name].onAdd((item, key) => {
       const finalTarget = wrapperFnc({})
+      // TODO: check if a primative value, and somehow bind that?
       bindSchema(item, finalTarget)
       target[name][key] = finalTarget
     })
@@ -52,6 +54,7 @@ export const useWrappedDecoderState = (decoder, wrapperFnc) => {
   const bindField = (schema, target, metadata) => {
     const { type } = metadata
 
+    // TODO: these type checks may be inaccurate or unreliable
     if(typeof type == "string") {
       bindBasicField(schema, target, metadata)
     } else if(typeof type == "object" && typeof type.map != "undefined") {
@@ -71,6 +74,7 @@ export const useWrappedDecoderState = (decoder, wrapperFnc) => {
       bindField(schema, target, metadata[entry])
   }
 
+  // TODO: shouldn't have to wait for some data to bind?
   let haveBound = false
   $(decoder.state).onChange(() => {
     if(!haveBound) {
