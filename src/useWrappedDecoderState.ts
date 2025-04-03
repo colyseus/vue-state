@@ -12,7 +12,6 @@ export const useWrappedDecoderState = (decoder, wrapperFnc) => {
       target[name] = wrapperFnc([])
 
     $(schema)[name].onAdd((item, index) => {
-      // TODO: when adding an item, sometimes the item is added twice if the array isn't seen beforehand?
       let finalTarget = null
       if(isPrimative(item)) {
         // TODO: bind the primative value changing somehow?
@@ -22,7 +21,7 @@ export const useWrappedDecoderState = (decoder, wrapperFnc) => {
         bindSchema(item, finalTarget)
       }
       target[name].splice(index, 0, finalTarget)
-    })
+    }, false)
 
     $(schema)[name].onRemove((_, index) => {
       target[name].splice(index, 1)
@@ -43,7 +42,7 @@ export const useWrappedDecoderState = (decoder, wrapperFnc) => {
         bindSchema(item, finalTarget)
       }
       target[name][key] = finalTarget
-    })
+    }, false)
 
     $(schema)[name].onRemove((_, key) => {
       delete target[name][key]
