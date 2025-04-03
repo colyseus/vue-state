@@ -6,6 +6,7 @@
       <label><input type="checkbox" v-model="opts.updateDeeper" /> Update deeper tick</label>
       <label><input type="checkbox" v-model="opts.updatePlayerPositions" /> Update player positions</label>
       <label><input type="checkbox" v-model="opts.updatePrimatives" /> Update primatives</label>
+      <label><input type="checkbox" v-model="opts.showRawStates" /> Show raw states</label>
       <button @click="simulateString">Simulate string change</button>
       <button @click="simulateAddPlayer">Simulate add player</button>
       <button @click="simulateRemovePlayer">Simulate remove player</button>
@@ -16,9 +17,20 @@
       <button @click="simulateAddPrimativeArray">Simulate add primative arr</button>
       <button @click="simulateRemovePrimativeArray">Simulate remove primative arr</button>
     </div>
+
+    <h2>Rendered reactive state</h2>
     <RoomState :state="state" />
-    <pre>{{ state }}</pre>
-    <pre>{{ serverState }}</pre>
+
+    <template v-if="opts.showRawStates">
+      <h2>Raw reactive state</h2>
+      <pre>{{ state }}</pre>
+
+      <h2>Raw server state</h2>
+      <pre>{{ serverState }}</pre>
+
+      <h2>Raw client state</h2>
+      <pre>{{ clientState }}</pre>
+    </template>
   </div>
 </template>
 
@@ -27,7 +39,7 @@ import RoomState from "./components/RoomState.vue"
 
 import { reactive } from "vue"
 
-import { simulateServer, decoder, serverState } from "./simulate.ts"
+import { simulateServer, decoder, clientState, serverState } from "./simulate.ts"
 import { useWrappedDecoderState } from "./useWrappedDecoderState.ts"
 import { Player, TestNumber } from "./MyRoomState.ts"
 
@@ -40,6 +52,7 @@ const opts = reactive({
   updateDeeper: false,
   updatePlayerPositions: false,
   updatePrimatives: false,
+  showRawStates: false,
 })
 
 // Setup intervals to simulate the server state update
