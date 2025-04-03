@@ -22,8 +22,11 @@
             </div>
         </div>
         <div class="room__primativeMap">
-            <div class="primative" v-for="(number, id) in state.primativeMap" :key="id">
-                {{ number }}
+            <div class="primative" v-for="(number, key) in state.primativeMap" :key="key">
+                <div class="primative__key">key: {{ key }}</div>
+                <div class="primative__number">
+                    {{ number }}
+                </div>
             </div>
         </div>
         <div class="room__primativeArr">
