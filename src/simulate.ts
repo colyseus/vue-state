@@ -1,7 +1,7 @@
 import { Buffer } from "buffer/"
 (window as any).Buffer = Buffer
 
-import { Decoder, Encoder, getDecoderStateCallbacks } from "@colyseus/schema"
+import { Decoder, Encoder } from "@colyseus/schema"
 
 import { MyRoomState } from "./MyRoomState"
 
@@ -11,8 +11,10 @@ export const clientState = new MyRoomState()
 export const encoder = new Encoder(serverState)
 export const decoder = new Decoder(clientState)
 
-export const simulateNetworkTransfer = () => {
+export const simulateServer = (callback) => {
+  console.log("simulating behaviour on server", callback)
+  callback(serverState)
   const encoded = encoder.encode()
   decoder.decode(encoded)
+  encoder.discardChanges()
 }
-export const $ = getDecoderStateCallbacks(decoder)

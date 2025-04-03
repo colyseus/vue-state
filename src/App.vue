@@ -1,67 +1,109 @@
 <template>
-  <div :key="forceUpdate">
+  <div>
     <div class="options">
       <label><input type="checkbox" v-model="opts.updateRoot" /> Update root tick</label>
       <label><input type="checkbox" v-model="opts.updateDeep" /> Update deep tick</label>
+      <label><input type="checkbox" v-model="opts.updateDeeper" /> Update deeper tick</label>
+      <label><input type="checkbox" v-model="opts.updatePlayerPositions" /> Update player positions</label>
+      <button @click="simulateString">Simulate string change</button>
+      <button @click="simulateAddPlayer">Simulate add player</button>
+      <button @click="simulateRemovePlayer">Simulate remove player</button>
+      <button @click="simulateAddNumber">Simulate add number</button>
+      <button @click="simulateRemoveNumber">Simulate remove number</button>
+      <button @click="simulateAddPrimativeMap">Simulate add primative map</button>
+      <button @click="simulateRemovePrimativeMap">Simulate remove primative map</button>
+      <button @click="simulateAddPrimativeArray">Simulate add primative arr</button>
+      <button @click="simulateRemovePrimativeArray">Simulate remove primative arr</button>
     </div>
-    <div class="example">
-      <h1>Raw wrapped with <code>reactive()</code></h1>
-      <pre>{{ stateRaw }}</pre>
-      <p>This fails when the root tick is removed</p>
-    </div>
-    <div class="example">
-      <h1>Recursive proxy wrapper</h1>
-      <pre>{{ stateProxy }}</pre>
-      <p>This fails when the root tick is removed</p>
-    </div>
+    <RoomState :state="state" />
+    <pre>{{ state }}</pre>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, onUnmounted } from "vue"
-import { serverState, clientState, simulateNetworkTransfer, $ } from "./simulate.ts"
+import RoomState from "./components/RoomState.vue"
+
+import { reactive } from "vue"
+
+import { simulateServer, decoder } from "./simulate.ts"
+import { useWrappedDecoderState } from "./useWrappedDecoderState.ts"
+import { Player, TestNumber } from "./MyRoomState.ts"
+
+const state = useWrappedDecoderState(decoder, reactive)
 
 // Define our options
 const opts = reactive({
-  updateRoot: true,
-  updateDeep: true,
+  updateRoot: false,
+  updateDeep: false,
+  updateDeeper: false,
+  updatePlayerPositions: false,
 })
 
-// Prepare our reactive states
-const stateProxy = reactive({})
-const stateRaw = reactive(clientState)
-
-// Setup an interval to simulate the server state update
+// Setup intervals to simulate the server state update
 setInterval(() => {
   if(opts.updateRoot)
-    serverState.tick += 1
+    simulateServer(s => s.tick += 1)
   
   if(opts.updateDeep)
-    serverState.deep.tick += 1
-
-  simulateNetworkTransfer()
+    simulateServer(s => s.deep.tick += 1)
+  
+  if(opts.updateDeeper)
+    simulateServer(s => s.deep.deeper.tick += 1)
 }, 1000)
 
-// Force the UI to refresh every 5 seconds
-const forceUpdate = ref(0)
-const interval = setInterval(() => {
-    forceUpdate.value += 1
-}, 5000)
+setInterval(() => {
+  if(opts.updatePlayerPositions) {
+    simulateServer(s => {
+      for(const player of s.players.values()) {
+        player.position.x = Math.random() * 100
+        player.position.y = Math.random() * 100
+      }
+    })
+  }
+}, 100)
 
-// Example 2: Bind the client state to a recursive proxy
-const bindProxy = (from, to) => {
-  return new Proxy(from, {
-    set(obj, key, value) {
-      if(typeof value == "object")
-        to[key] = bindProxy(value, obj[key])
-        else
-        to[key] = value
+// Provide some simulate functions
+const simulateString = () => simulateServer(s => s.myString = "Updated! " + Math.random())
 
-      return true
-    }
+const simulateAddPlayer = () => {
+  const name = Math.random()
+  simulateServer(s => s.players.set(`p-${name}`, new Player().assign({ name: "Player " + name })))
+}
+
+const simulateRemovePlayer = () => {
+  simulateServer(s => {
+    const randomKey = Array.from(s.players.keys())[Math.floor(Math.random() * s.players.size)];
+    s.players.delete(randomKey)
   })
 }
-$(clientState).bindTo(bindProxy({}, stateProxy))
 
-onUnmounted(() => clearInterval(interval))
+const simulateAddNumber = () => {
+  const number = Math.random()
+  simulateServer(s => s.numbers.push(new TestNumber().assign({ value: number })))
+}
+
+const simulateRemoveNumber = () => {
+  simulateServer(s => s.numbers.pop())
+}
+
+const simulateAddPrimativeMap = () => {
+  const id = Math.random()
+  simulateServer(s => s.primativeMap.set(`i-${id}`, id))
+}
+
+const simulateRemovePrimativeMap = () => {
+  simulateServer(s => {
+    const randomKey = Array.from(s.primativeMap.keys())[Math.floor(Math.random() * s.primativeMap.size)];
+    s.primativeMap.delete(randomKey)
+  })
+}
+
+const simulateAddPrimativeArray = () => {
+  const number = Math.random()
+  simulateServer(s => s.primativeArr.push(number))
+}
+
+const simulateRemovePrimativeArray = () => {
+  simulateServer(s => s.primativeArr.pop())
+}
 </script>
