@@ -5,6 +5,7 @@
       <label><input type="checkbox" v-model="opts.updateDeep" /> Update deep tick</label>
       <label><input type="checkbox" v-model="opts.updateDeeper" /> Update deeper tick</label>
       <label><input type="checkbox" v-model="opts.updatePlayerPositions" /> Update player positions</label>
+      <label><input type="checkbox" v-model="opts.updatePrimatives" /> Update primatives</label>
       <button @click="simulateString">Simulate string change</button>
       <button @click="simulateAddPlayer">Simulate add player</button>
       <button @click="simulateRemovePlayer">Simulate remove player</button>
@@ -17,6 +18,7 @@
     </div>
     <RoomState :state="state" />
     <pre>{{ state }}</pre>
+    <pre>{{ serverState }}</pre>
   </div>
 </template>
 
@@ -25,7 +27,7 @@ import RoomState from "./components/RoomState.vue"
 
 import { reactive } from "vue"
 
-import { simulateServer, decoder } from "./simulate.ts"
+import { simulateServer, decoder, serverState } from "./simulate.ts"
 import { useWrappedDecoderState } from "./useWrappedDecoderState.ts"
 import { Player, TestNumber } from "./MyRoomState.ts"
 
@@ -37,6 +39,7 @@ const opts = reactive({
   updateDeep: false,
   updateDeeper: false,
   updatePlayerPositions: false,
+  updatePrimatives: false,
 })
 
 // Setup intervals to simulate the server state update
@@ -49,6 +52,18 @@ setInterval(() => {
   
   if(opts.updateDeeper)
     simulateServer(s => s.deep.deeper.tick += 1)
+
+  if(opts.updatePrimatives) {
+    simulateServer(s => {
+      for(let i = 0; i < s.primativeArr.length; i++) {
+        s.primativeArr[i] = Math.random()
+      }
+
+      s.primativeMap.forEach((_, key) => {
+        s.primativeMap.set(key, Math.random())
+      })
+    })
+  }
 }, 1000)
 
 setInterval(() => {
