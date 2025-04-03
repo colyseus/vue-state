@@ -1,5 +1,7 @@
 import { Schema, getDecoderStateCallbacks } from "@colyseus/schema"
 
+const isPrimative = (value) => value !== Object(value)
+
 export const useWrappedDecoderState = (decoder, wrapperFnc) => {
   const targetRoot = wrapperFnc({})
 
@@ -10,10 +12,15 @@ export const useWrappedDecoderState = (decoder, wrapperFnc) => {
       target[name] = wrapperFnc([])
 
     $(schema)[name].onAdd((item, index) => {
-      const finalTarget = wrapperFnc({})
-      // TODO: check if a primative value, and somehow bind that?
       // TODO: when adding an item, sometimes the item is added twice if the array isn't seen beforehand?
-      bindSchema(item, finalTarget)
+      let finalTarget = null
+      if(isPrimative(item)) {
+        // TODO: bind the primative value changing somehow?
+        finalTarget = item
+      } else {
+        finalTarget = wrapperFnc({})
+        bindSchema(item, finalTarget)
+      }
       target[name].splice(index, 0, finalTarget)
     })
 
@@ -27,9 +34,14 @@ export const useWrappedDecoderState = (decoder, wrapperFnc) => {
       target[name] = wrapperFnc({})
 
     $(schema)[name].onAdd((item, key) => {
-      const finalTarget = wrapperFnc({})
-      // TODO: check if a primative value, and somehow bind that?
-      bindSchema(item, finalTarget)
+      let finalTarget = null
+      if(isPrimative(item)) {
+        // TODO: bind the primative value changing somehow?
+        finalTarget = item
+      } else {
+        finalTarget = wrapperFnc({})
+        bindSchema(item, finalTarget)
+      }
       target[name][key] = finalTarget
     })
 
