@@ -1,22 +1,32 @@
+// TODO: weird behaviour when removing from sets and collections it appears
+//       to sometimes leave some in the final reactive state, i suspect this
+//       might be due to onRemove not working as intended
+
 import { Schema, getDecoderStateCallbacks } from "@colyseus/schema"
 
-const isPrimative = (value) => value !== Object(value)
-
-export const useWrappedDecoderState = (decoder, wrapperFnc) => {
+export const useWrappedDecoderState = (decoder, wrapperFnc = (v) => v) => {
   const targetRoot = wrapperFnc({})
 
   const $ = getDecoderStateCallbacks(decoder)
 
-  const bindArraySchemaField = (schema, target, { name }) => {
+  const bindArraySchemaField = (schema, target, { name, type }) => {
     if(target[name] == undefined)
       target[name] = wrapperFnc([])
 
+    // TODO: This might not be the best way to check this
+    const arrayContainsPrimatives = typeof type.array == "string" || typeof type.set == "string" || typeof type.collection == "string"
+
+    if(arrayContainsPrimatives) {
+      // TODO: This array contains primative types, we'll have to bind through .onChange to track changes
+      $(schema)[name].onChange(() => {
+        for(let i = 0; i < schema[name].length; i++) 
+          target[name][i] = schema[name][i]
+      })
+    }
+
     $(schema)[name].onAdd((item, index) => {
-      let finalTarget = null
-      if(isPrimative(item)) {
-        // TODO: bind the primative value changing somehow?
-        finalTarget = item
-      } else {
+      let finalTarget = item
+      if(!arrayContainsPrimatives) {
         finalTarget = wrapperFnc({})
         bindSchema(item, finalTarget)
       }
@@ -28,16 +38,25 @@ export const useWrappedDecoderState = (decoder, wrapperFnc) => {
     })
   }
 
-  const bindMapSchemaField = (schema, target, { name }) => {
+  const bindMapSchemaField = (schema, target, { name, type }) => {
     if(target[name] == undefined)
       target[name] = wrapperFnc({})
 
+    // TODO: This might not be the best way to check this
+    const mapContainsPrimatives = typeof type.map == "string"
+
+    if(mapContainsPrimatives) {
+      // TODO: This map contains primative types, we'll have to bind through .onChange to track changes
+      $(schema)[name].onChange(() => {
+        schema[name].forEach((value, key) => {
+          target[name][key] = value
+        })
+      })
+    }
+
     $(schema)[name].onAdd((item, key) => {
-      let finalTarget = null
-      if(isPrimative(item)) {
-        // TODO: bind the primative value changing somehow?
-        finalTarget = item
-      } else {
+      let finalTarget = item
+      if(!mapContainsPrimatives) {
         finalTarget = wrapperFnc({})
         bindSchema(item, finalTarget)
       }
@@ -62,15 +81,18 @@ export const useWrappedDecoderState = (decoder, wrapperFnc) => {
     $(schema).listen(name, (value) => target[name] = value)
   }
 
+  // TODO: the type checks throughout this method may be inaccurate or unreliable
   const bindField = (schema, target, metadata) => {
     const { type } = metadata
 
-    // TODO: these type checks may be inaccurate or unreliable
+    const isTypeObjectLike = (type) => Boolean(typeof type == "object" && type.map)
+    const isTypeArrayLike = (type) => Boolean(typeof type == "object" && (type.array || type.set || type.collection))
+
     if(typeof type == "string") {
       bindBasicField(schema, target, metadata)
-    } else if(typeof type == "object" && typeof type.map != "undefined") {
+    } else if(isTypeObjectLike(type)) {
       bindMapSchemaField(schema, target, metadata)
-    } else if(typeof type == "object" && typeof type.array != "undefined") {
+    } else if(isTypeArrayLike(type)) {
       bindArraySchemaField(schema, target, metadata)
     } else if(Schema.prototype.isPrototypeOf(type.prototype)) {
       bindSchemaField(schema, target, metadata)
@@ -86,12 +108,9 @@ export const useWrappedDecoderState = (decoder, wrapperFnc) => {
   }
 
   // TODO: shouldn't have to wait for some data to bind?
-  let haveBound = false
-  $(decoder.state).onChange(() => {
-    if(!haveBound) {
-      bindSchema(decoder.state, targetRoot)
-      haveBound = true
-    }
+  const unbindFirstChange = $(decoder.state).onChange(() => {
+    bindSchema(decoder.state, targetRoot)
+    unbindFirstChange()
   })
 
   return targetRoot

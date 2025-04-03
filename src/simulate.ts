@@ -12,7 +12,6 @@ export const encoder = new Encoder(serverState)
 export const decoder = new Decoder(clientState)
 
 export const simulateServer = (callback) => {
-  console.log("simulating behaviour on server", callback)
   callback(serverState)
   const encoded = encoder.encode()
   decoder.decode(encoded)
