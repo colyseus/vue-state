@@ -16,6 +16,10 @@
       <button @click="simulateRemovePrimativeMap">Simulate remove primative map</button>
       <button @click="simulateAddPrimativeArray">Simulate add primative arr</button>
       <button @click="simulateRemovePrimativeArray">Simulate remove primative arr</button>
+      <button @click="simulateAddPrimativeSet">Simulate add primative set</button>
+      <button @click="simulateRemovePrimativeSet">Simulate remove primative set</button>
+      <button @click="simulateAddPrimativeCollection">Simulate add primative collection</button>
+      <button @click="simulateRemovePrimativeCollection">Simulate remove primative collection</button>
     </div>
 
     <h2>Rendered reactive state</h2>
@@ -133,5 +137,25 @@ const simulateAddPrimativeArray = () => {
 
 const simulateRemovePrimativeArray = () => {
   simulateServer(s => s.primativeArr.pop())
+}
+
+const simulateAddPrimativeSet = () => {
+  const number = Math.random() * 3 | 0
+  simulateServer(s => s.primativeSet.add(number))
+}
+
+const simulateRemovePrimativeSet = () => {
+  const number = Math.random() * 3 | 0
+  simulateServer(s => s.primativeSet.delete(number))
+}
+
+const simulateAddPrimativeCollection = () => {
+  const number = Math.random() * 3 | 0
+  simulateServer(s => s.primativeCollection.add(number))
+}
+
+const simulateRemovePrimativeCollection = () => {
+  const number = Math.random() * 3 | 0
+  simulateServer(s => s.primativeCollection.delete(number))
 }
 </script>

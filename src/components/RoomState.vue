@@ -34,6 +34,16 @@
                 {{ number }}
             </div>
         </div>
+        <div class="room__primativeSet">
+            <div class="primative" v-for="(number, idx) in state.primativeSet" :key="idx">
+                {{ number }}
+            </div>
+        </div>
+        <div class="room__primativeCollection">
+            <div class="primative" v-for="(number, idx) in state.primativeCollection" :key="idx">
+                {{ number }}
+            </div>
+        </div>
     </div>
 </template>
 
